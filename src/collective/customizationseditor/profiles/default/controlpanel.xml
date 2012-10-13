@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<object
+    name="portal_controlpanel"
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="plone"
+    purge="False">
+
+    <configlet
+        title="Customizations"
+        action_id="collective.customizationseditor"
+        appId="collective.customizationseditor"
+        category="Products"
+        condition_expr=""
+        url_expr="string:${portal_url}/@@customizations-editor"
+        icon_expr="string:${portal_url}/++resource++collective.customizationseditor.gif"
+        visible="True"
+        i18n:attributes="title">
+            <permission>Manage Portal</permission>
+    </configlet>
+
+</object>

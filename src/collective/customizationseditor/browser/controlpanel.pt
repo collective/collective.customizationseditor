@@ -1,0 +1,102 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    lang="en"
+    metal:use-macro="context/main_template/macros/master"
+    i18n:domain="plone">
+
+<head>
+<metal:block fill-slot="top_slot">
+
+<tal:defines define="dummy python:request.set('disable_border',1);
+                     disable_column_one python:request.set('disable_plone.leftcolumn',1);
+                     disable_column_two python:request.set('disable_plone.rightcolumn',1);"/>
+
+</metal:block>
+
+<metal:block fill-slot="head_slot">
+
+<!-- File manager -->
+<!-- <metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/resources" /> -->
+
+<!-- Styling for this page -->
+<link
+    rel="stylesheet"
+    type="text/css"
+    tal:attributes="href string:${view/portalUrl}/++resource++collective.customizationseditor/controlpanel.css"
+    />
+
+<script type="text/javascript" tal:content="view/jsVariables"></script>
+
+<script type="text/javascript">
+
+    jQuery(function($) {
+
+        $().ready(function() {
+
+            if($.browser.msie) {
+                $(".ie-warning").show();
+            }
+
+        });
+
+    });
+
+</script>
+
+</metal:block>
+</head>
+
+<body>
+<div metal:fill-slot="content" class="documentEditable" id="customizationsEditor">
+
+    <div metal:use-macro="context/global_statusmessage/macros/portal_message">
+      Portal status message
+    </div>
+
+    <div id="content">
+
+
+        <div id="page-intro">
+
+            <h1 class="documentFirstHeading"
+                i18n:translate="heading_customisations_editor">
+                Plone Customizations
+            </h1>
+
+            <a href=""
+                class="link-parent"
+                tal:attributes="href string:${portal_url}/@@overview-controlpanel"
+                i18n:translate="label_up_to_controlpanel">
+                    Back to the control panel
+            </a>
+
+            <dl style="display: none" class="ie-warning portalMessage warning">
+                <dt i18n:translate="">Warning</dt>
+                <dd i18n:translate="customizations_Editor_warning_ie">
+                    You are using Internet Explorer. The customizations editor will work,
+                    but some functionality will not be available. We recommend that
+                    you use Mozilla Firefox or Google Chrome instead.
+                </dd>
+            </dl>
+
+        </div>
+
+        <!-- <metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/filemanager">
+            <span id="secondary-buttons" metal:fill-slot="extraButtons">
+
+                
+            </span>
+
+            <span id="secondary-context-buttons" metal:fill-slot="extraContextButtons">
+                
+            </span>
+
+        </metal:block> -->
+
+    </div>
+
+</div>
+</body>
+</html>
