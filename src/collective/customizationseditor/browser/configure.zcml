@@ -14,12 +14,58 @@
         directory="resources"
         />
 
+
+    <adapter
+        factory=".namespace.CustomizationPackageTraverser"
+        name="customizationpackage"
+        />
+
     <browser:page
         name="customizations-editor"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"
         layer="collective.customizationseditor.interfaces.ICustomizationsEditorLayer"
         class=".controlpanel.ControlPanel"
         template="controlpanel.pt"
+        permission="cmf.ManagePortal"
+        />
+
+    <!-- File manager operations -->
+
+    <configure package="plone.resourceeditor">
+        <browser:page
+            name="plone.resourceeditor.filemanager"
+            for="collective.customizationseditor.interfaces.ICustomizationPackage"
+            layer="collective.customizationseditor.interfaces.ICustomizationsEditorLayer"
+            class="collective.customizationseditor.browser.filemanager.FileManager"
+            template="editor.pt"
+            permission="cmf.ManagePortal"
+            />
+    </configure>
+
+    <browser:page
+        name="plone.resourceeditor.getfile"
+        for="collective.customizationseditor.interfaces.ICustomizationPackage"
+        layer="collective.customizationseditor.interfaces.ICustomizationsEditorLayer"
+        class=".filemanager.FileManager"
+        attribute="getFile"
+        permission="cmf.ManagePortal"
+        />
+
+    <browser:page
+        name="plone.resourceeditor.savefile"
+        for="collective.customizationseditor.interfaces.ICustomizationPackage"
+        layer="collective.customizationseditor.interfaces.ICustomizationsEditorLayer"
+        class=".filemanager.FileManager"
+        attribute="saveFile"
+        permission="cmf.ManagePortal"
+        />
+
+    <browser:page
+        name="plone.resourceeditor.filetree"
+        for="collective.customizationseditor.interfaces.ICustomizationPackage"
+        layer="collective.customizationseditor.interfaces.ICustomizationsEditorLayer"
+        class=".filemanager.FileManager"
+        attribute="filetree"
         permission="cmf.ManagePortal"
         />
 

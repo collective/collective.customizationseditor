@@ -15,10 +15,10 @@
 
 </metal:block>
 
-<metal:block fill-slot="head_slot">
+<metal:block fill-slot="head_slot" tal:define="resourceDirectory nocall:context/++customizationpackage++plone-customizations">
 
 <!-- File manager -->
-<!-- <metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/resources" /> -->
+<metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/resources" />
 
 <!-- Styling for this page -->
 <link
@@ -49,7 +49,7 @@
 </head>
 
 <body>
-<div metal:fill-slot="content" class="documentEditable" id="customizationsEditor">
+<div metal:fill-slot="content" class="documentEditable" id="customizationsEditor" tal:define="resourceDirectory nocall:context/++customizationpackage++plone-customizations">
 
     <div metal:use-macro="context/global_statusmessage/macros/portal_message">
       Portal status message
@@ -74,7 +74,7 @@
 
             <dl style="display: none" class="ie-warning portalMessage warning">
                 <dt i18n:translate="">Warning</dt>
-                <dd i18n:translate="customizations_Editor_warning_ie">
+                <dd i18n:translate="customizations_editor_warning_ie">
                     You are using Internet Explorer. The customizations editor will work,
                     but some functionality will not be available. We recommend that
                     you use Mozilla Firefox or Google Chrome instead.
@@ -83,7 +83,7 @@
 
         </div>
 
-        <!-- <metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/filemanager">
+        <metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/filemanager">
             <span id="secondary-buttons" metal:fill-slot="extraButtons">
 
                 
@@ -93,7 +93,7 @@
                 
             </span>
 
-        </metal:block> -->
+        </metal:block>
 
     </div>
 
