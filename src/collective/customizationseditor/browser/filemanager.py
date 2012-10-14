@@ -2,6 +2,7 @@ import json
 import os
 import os.path
 import time
+import shutil
 
 from zope.i18nmessageid import MessageFactory
 from zope.cachedescriptors import property
@@ -285,7 +286,7 @@ class FileManager(Base):
 
         code = 0
         error = ''
-        
+
         if not os.path.isdir(oldPath):
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
@@ -293,13 +294,20 @@ class FileManager(Base):
             code = 1
         else:
             if newName != oldName:
-                if os.path.exists(os.path.join(oldPath, newName)):
+                if not os.path.exists(absolutePath):
+                    error = translate(_(u'filemanager_error_file_not_found',
+                                      default=u"File not found."),
+                                      context=self.request)
+                    code = 1
+
+                elif os.path.exists(os.path.join(oldPath, newName)):
                     error = translate(_(u'filemanager_error_file_exists',
                                   default=u"File already exists."),
                                   context=self.request)
                     code = 1
                 else:
-                    os.rename(os.path.join(oldPath, oldName), os.path.join(oldPath, newName))
+                    os.rename(os.path.join(oldPath, oldName), 
+                              os.path.join(oldPath, newName))
 
         return {
             "oldParent": self.normalizeReturnPath(os.path.split(oldPath)[-1]),
@@ -316,27 +324,49 @@ class FileManager(Base):
 
         path = path.encode('utf-8')
 
-        npath = self.normalizePath(path)
-        parentPath = '/'.join(npath.split('/')[:-1])
-        name = npath.split('/')[-1]
+        absolutePath = self.getAbsolutePath(path)
+
+        parentPath, name = os.path.split(absolutePath)
+
         code = 0
         error = ''
 
-        try:
-            parent = self.getObject(parentPath)
-        except KeyError:
+        if not os.path.isdir(parentPath):
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
             code = 1
-        # else:
-        #     try:
-        #         del parent[name]
-        #     except KeyError:
-        #         error = translate(_(u'filemanager_error_file_not_found',
-        #                           default=u"File not found."),
-        #                           context=self.request)
-        #         code = 1
+        else:
+            if not os.path.exists(absolutePath):
+                error = translate(_(u'filemanager_error_file_not_found',
+                                  default=u"File not found."),
+                                  context=self.request)
+                code = 1
+            else:
+                if not os.path.isdir(parentPath):
+                    try:
+                        os.remove(absolutePath)
+                    except OSError, e:
+                        if e.errno == 1:
+                            error = translate(_(u'filemanager_error_not_allowed',
+                                default=u"You are not allowed to remove this."),
+                                context=self.request)
+                            code = 1
+
+                        elif e.errno == 13:
+                            error = translate(_(u'filemanager_error_unauthorized',
+                                      default=(u"You are not allowed to create a "
+                                                "folder in \"%s\"." % path)),
+                                      context=self.request)
+                            code = 1
+                        else:
+                            error = translate(_(u'filemanager_error_unknown',
+                                      default=(u"Something bad happened: "
+                                                "\"%s\"." % e.strerror)),
+                                      context=self.request)
+                            code = 1
+                else:
+                    shutil.rmtree(absolutePath, ignore_errors=True)
 
         return {
             'path': self.normalizeReturnPath(path),
