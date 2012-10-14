@@ -486,7 +486,8 @@ class FileManager(Base):
 
         def getFolder(rootPath, parentPath=''):
             result = []
-            for name in os.listdir(rootPath):
+            parent = os.path.join(rootPath, parentPath)
+            for name in os.listdir(parent):
                 key = os.path.join(parentPath, name)
                 path = os.path.join(rootPath, key)
                 if os.path.isdir(path):
