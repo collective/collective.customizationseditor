@@ -279,34 +279,32 @@ class FileManager(Base):
         path = path.encode('utf-8')
         newName = newName.encode('utf-8')
 
-        npath = self.normalizePath(path)
-        oldPath = newPath = '/'.join(npath.split('/')[:-1])
-        oldName = npath.split('/')[-1]
+        absolutePath = self.getAbsolutePath(path)
+
+        oldPath, oldName = os.path.split(absolutePath)
 
         code = 0
         error = ''
-
-        try:
-            parent = self.getObject(oldPath)
-        except KeyError:
+        
+        if not os.path.isdir(oldPath):
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
             code = 1
         else:
             if newName != oldName:
-                if newName in parent:
+                if os.path.exists(os.path.join(oldPath, newName)):
                     error = translate(_(u'filemanager_error_file_exists',
                                   default=u"File already exists."),
                                   context=self.request)
                     code = 1
-                # else:
-                #     parent.rename(oldName, newName)
+                else:
+                    os.rename(os.path.join(oldPath, oldName), os.path.join(oldPath, newName))
 
         return {
-            "oldParent": self.normalizeReturnPath(oldPath),
+            "oldParent": self.normalizeReturnPath(os.path.split(oldPath)[-1]),
             "oldName": oldName,
-            "newParent": self.normalizeReturnPath(newPath),
+            "newParent": self.normalizeReturnPath(os.path.split(oldPath)[-1]),
             "newName": newName,
             'error': error,
             'code': code,
