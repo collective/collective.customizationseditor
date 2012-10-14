@@ -12,6 +12,8 @@ from plone.resourceeditor.browser import validateFilename
 
 from collective.customizationseditor.interfaces import CUSTOMIZATIONS_PACKAGE_NAMESPACE
 
+from zExceptions import Unauthorized
+
 _ = MessageFactory(u"plone")
 
 # TODO: Implement the various operations below
@@ -276,8 +278,8 @@ class FileManager(Base):
                                   context=self.request)
                 code = 1
             else:
-                opened_file = open(newPath, 'w')
-                opened_file.close()
+                openedFile = open(newPath, 'w')
+                openedFile.close()
 
         return {
             "parent": self.normalizeReturnPath(path),
@@ -412,25 +414,32 @@ class FileManager(Base):
         """Serve the requested file to the user
         """
 
-        path = path.encode('utf-8')
-
-        npath = self.normalizePath(path)
-        parentPath = '/'.join(npath.split('/')[:-1])
-        name = npath.split('/')[-1]
-
-        parent = self.getObject(parentPath)
+        absolutePath = self.getAbsolutePath(path)
+        name = absolutePath.split('/')[-1]
 
         self.request.response.setHeader('Content-Type',
                                         'application/octet-stream')
         self.request.response.setHeader('Content-Disposition',
                                         'attachment; filename="%s"' % name)
 
-        # return parent.readFile(name)
-        return ''
+        return open(absolutePath, 'rb')
 
     # Helpers
     def getObject(self, path):
         raise NotImplementedError()
+
+    def getAbsolutePath(self, key):
+        """Given a key (i.e. a relative path), return an absolute path
+        as utf-8, and make sure noone is trying to break out using "../".
+        """
+
+        if '..' in key:
+            raise Unauthorized("Stay within your sandbox, please")
+
+        path = os.path.join(self.context.path, key)
+        if isinstance(path, unicode):
+            path = path.encode('utf-8')
+        return path
 
     def getExtension(self, path):
         basename, ext = os.path.splitext(path)
@@ -441,64 +450,56 @@ class FileManager(Base):
     def getFile(self, path):
         self.setup()
 
-        path = path.encode('utf-8')
-
-        # XXX: We'll need this later
-        # path = self.normalizePath(path)
-
-        basename, ext = os.path.splitext(path)
-        ext = ext[1:].lower()
+        absolutePath = self.getAbsolutePath(path)
+        ext = self.getExtension(absolutePath)
 
         result = {'ext': ext}
 
-        # XXX: We need this ?
-        # if ext in self.knownExtensions:
-        #     result['contents'] = str(file.data)
-        # else:
-        #     info = self.getInfo(path)
-        #     result['info'] = self.previewTemplate(info=info)
-
-        opened_file = open(path, 'r')
-        result['contents'] = str(opened_file.read())
-        opened_file.close()
+        if ext in self.knownExtensions:
+            openedFile = open(absolutePath, 'rb')
+            result['contents'] = str(openedFile.read())
+            openedFile.close()
+        else:
+            info = self.getInfo(path)
+            result['info'] = self.previewTemplate(info=info)
 
         self.request.response.setHeader('Content-Type', 'application/json')
         return json.dumps(result)
 
     def saveFile(self, path, value):
-        path = path.encode('utf-8')
+        self.setup()
 
-        # XXX: We need this ?
-        # processInputs(self.request)
+        path = self.getAbsolutePath(path)
+        value = value.replace('\r\n', '\n').encode('utf-8')
 
-        value = value.replace('\r\n', '\n')
-
-        opened_file = open(path, 'w')
-        opened_file.write(value.encode('utf-8'))
-        opened_file.close()
+        openedFile = open(path, 'wb')
+        openedFile.write(value)
+        openedFile.close()
 
         return ' '  # Zope no likey empty responses
 
     def filetree(self):
+        self.setup()
 
         foldersOnly = bool(self.request.get('foldersOnly', False))
 
-        def getFolder(root):
+        def getFolder(rootPath, parentPath=''):
             result = []
-            for name in os.listdir(root):
-                path = os.path.join(root, name)
+            for name in os.listdir(rootPath):
+                key = os.path.join(parentPath, name)
+                path = os.path.join(rootPath, key)
                 if os.path.isdir(path):
                     item = {
                         'title': name,
-                        'key': path,
+                        'key': key,
                         'isFolder': True
                     }
-                    item['children'] = getFolder(path)
+                    item['children'] = getFolder(rootPath, key)
                     result.append(item)
                 elif not foldersOnly:
                     item = {
                         'title': name,
-                        'key': path,
+                        'key': key,
                         'isFolder': False
                     }
                     result.append(item)
