@@ -193,7 +193,7 @@ class FileManager(Base):
         if replacepath != None:
             replacepath = replacepath.encode('utf-8')
 
-        parentPath = self.normalizePath(path)
+        parentPath = self.getAbsolutePath(path)
 
         error = ''
         code = 0
@@ -206,32 +206,26 @@ class FileManager(Base):
             newPath = replacepath
             parentPath = '/'.join(replacepath.split('/')[:-1])
         else:
-            newPath = "%s/%s" % (parentPath, name,)
+            newPath = os.path.join(parentPath, name)
 
-        try:
-            parent = self.getObject(parentPath)
-        except KeyError:
+        if not os.path.exists(parentPath):
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
             code = 1
         else:
-            if name in parent and not replacepath:
+            if os.path.exists(newPath) and not replacepath:
                 error = translate(_(u'filemanager_error_file_exists',
                                   default=u"File already exists."),
                                   context=self.request)
                 code = 1
-            # else:
-            #     try:
-            #         self.resourceDirectory.writeFile(newPath, newfile)
-            #     except ValueError:
-            #         error = translate(_(u'filemanager_error_file_invalid',
-            #                           default=u"Could not read file."),
-            #                           context=self.request)
-            #         code = 1
+            else:
+                openedFile = open(newPath, 'wb')
+                openedFile.write(newfile.read())
+                openedFile.close()
 
         return {
-            "parent": self.normalizeReturnPath(parentPath),
+            "parent": self.normalizeReturnPath(path),
             "path": self.normalizeReturnPath(path),
             "name": name,
             "error": error,
