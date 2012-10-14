@@ -430,26 +430,12 @@ class FileManager(Base):
 
     # Helpers
     def getObject(self, path):
-        path = self.normalizePath(path)
-        if not path:
-            return self.resourceDirectory
-        # try:
-        #     return self.resourceDirectory[path]
-        # except (KeyError, NotFound,):
-        #     raise KeyError(path)
+        raise NotImplementedError()
 
-    # def getExtension(self, path):
-    #     basename, ext = os.path.splitext(path)
-    #     ext = ext[1:].lower()
-
-    #     ct = obj.getContentType()
-    #     if ct:
-    #         # take content type of the file over extension if available
-    #         if '/' in ct:
-    #             _ext = ct.split('/')[1].lower()
-    #         if _ext in self.extensionsWithIcons:
-    #             return _ext
-    #     return ext
+    def getExtension(self, path):
+        basename, ext = os.path.splitext(path)
+        ext = ext[1:].lower()
+        return ext
 
     # Methods that are their own views
     def getFile(self, path):
