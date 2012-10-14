@@ -430,6 +430,9 @@ class FileManager(Base):
         if '..' in key:
             raise Unauthorized("Stay within your sandbox, please")
 
+        if key and key.startswith('/'):
+            key = key[1:]
+
         path = os.path.join(self.context.path, key)
         if isinstance(path, unicode):
             path = path.encode('utf-8')
