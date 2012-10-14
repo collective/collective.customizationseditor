@@ -1,4 +1,6 @@
-import urllib
+import pkg_resources
+import os.path
+import Globals
 
 from zope.interface import implements
 from zope.component import adapts
@@ -9,9 +11,12 @@ from zope.traversing.namespace import SimpleHandler
 from collective.customizationseditor.interfaces import ICustomizationsEditorLayer
 from collective.customizationseditor.interfaces import ICustomizationPackage
 
+from collective.customizationseditor.interfaces import CUSTOMIZATIONS_PACKAGE_NAME
+from collective.customizationseditor.interfaces import CUSTOMIZATIONS_PACKAGE_NAMESPACE
+
 from Products.CMFPlone.interfaces import IPloneSiteRoot
 
-from zExceptions import NotFound
+from zExceptions import NotFound, Unauthorized
 
 
 class CustomizationPackage(object):
@@ -20,14 +25,12 @@ class CustomizationPackage(object):
     """
     implements(ICustomizationPackage)
 
-    def __init__(self, name, parent):
+    def __init__(self, distribution, name, parent):
+        self.distribution = distribution
+        self.path = distribution.location
         self.__name__ = name
         self.__parent__ = parent
 
-
-    # TODO: Add methods useful for implementing the file operations in
-    # the FileManager class. Should use pkg_resources API and provide primitives
-    # like read file, write file, delete file, etc.
 
 class CustomizationPackageTraverser(SimpleHandler):
     """The ++customizationpackage++ namespace
@@ -35,25 +38,33 @@ class CustomizationPackageTraverser(SimpleHandler):
     implements(ITraversable)
     adapts(IPloneSiteRoot, ICustomizationsEditorLayer)
 
-    name = "customizationpackage"
+    name = CUSTOMIZATIONS_PACKAGE_NAMESPACE
 
-    # TODO: Maybe make this more configurable, but we definitely want to be
-    # very restrictive in what we allow people to access
-    allowedPackages = frozenset(['plone-customizations'])
+    allowedPackages = frozenset([CUSTOMIZATIONS_PACKAGE_NAME])
 
     def __init__(self, context, request=None):
         self.context = context
 
     def traverse(self, name, remaining):
-        # Note: also fixes possible unicode problems
-        name = urllib.quote(name)
-
         if name not in self.allowedPackages:
             raise NotFound
 
-        # TODO: Check if package actually exists and raise NotFound if not
+        distribution = None
+
+        try:
+            distribution = pkg_resources.get_distribution(name)
+        except pkg_resources.DistributionNotFound:
+            raise NotFound
+
+        # Maybe not a filesystem egg
+        if not os.path.isdir(distribution.location):
+            raise NotFound("%s is not a filesystem development egg")
+
+        if not Globals.DevelopmentMode:
+            raise Unauthorized("The package traverser is only available in development mode")
 
         return CustomizationPackage(
+                distribution=distribution,
                 name=name,
                 parent=self.context,
             )

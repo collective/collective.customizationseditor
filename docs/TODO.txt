@@ -1,0 +1,24 @@
+To-do list
+==========
+
+[x] Finish the traversal namespace
+[ ] Tests for the traversal namespace
+
+[ ] Finish the file browser integration
+[ ] Tests for file browser integration
+
+[ ] Display warning and abort in production mode
+[ ] Display warning and abort if no plone-customizations package exists
+[ ] Display warning and abort if package is not a develop egg
+
+[ ] Support for server restart
+[ ] Support for safe server restart:
+    - Attempt to start Zope in a different process space
+    - Log and display any errors
+    - Only kill current process if no errors
+
+[ ] Support for snapshot versioning:
+    - Save a zip file of all changes until now
+    - Pick from a list of zip files to roll back
+[ ] Support for version control
+    - Support basic git operations if git installed

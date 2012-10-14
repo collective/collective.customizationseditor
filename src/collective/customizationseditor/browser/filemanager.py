@@ -9,9 +9,12 @@ from zope.i18n import translate
 from plone.resourceeditor.browser import FileManager as Base
 from plone.resourceeditor.browser import validateFilename
 
+from collective.customizationseditor.interfaces import CUSTOMIZATIONS_PACKAGE_NAMESPACE
+
 _ = MessageFactory(u"plone")
 
 # TODO: Implement the various operations below
+
 
 class FileManager(Base):
     """A version of the @@plone.resourceeditor.filemanager API that works with
@@ -20,7 +23,7 @@ class FileManager(Base):
 
     @property.Lazy
     def resourceType(self):
-        return "customizationpackage"
+        return CUSTOMIZATIONS_PACKAGE_NAMESPACE
 
     @property.Lazy
     def resourceDirectory(self):
@@ -28,8 +31,7 @@ class FileManager(Base):
 
     @property.Lazy
     def baseUrl(self):
-        return "%s/++%s++%s" % (self.portalUrl, self.resourceType,
-                                   self.resourceDirectory.__name__)
+        return "%s/++%s++%s" % (self.portalUrl, self.resourceType, self.resourceDirectory.__name__)
 
     def getFolder(self, path, getSizes=False):
         """Returns a dict of file and folder objects representing the

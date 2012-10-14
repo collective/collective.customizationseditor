@@ -1,9 +1,12 @@
 from zope.component import getMultiAdapter
+from zope.publisher.browser import BrowserView
+
+from AccessControl import Unauthorized
 from Products.Five.browser.decode import processInputs
 from Products.CMFCore.utils import getToolByName
 from Products.statusmessages.interfaces import IStatusMessage
-from AccessControl import Unauthorized
-from zope.publisher.browser import BrowserView
+
+from collective.customizationseditor.interfaces import CUSTOMIZATIONS_PACKAGE_NAME
 
 
 class ControlPanel(BrowserView):
@@ -19,6 +22,7 @@ class ControlPanel(BrowserView):
         self.request.response.setHeader('X-Theme-Disabled', '1')
         processInputs(self.request)
 
+        self.customizationsPackageName = CUSTOMIZATIONS_PACKAGE_NAME
         self.portalUrl = getToolByName(self.context, 'portal_url')()
         self.jsVariables = "" % (
             )

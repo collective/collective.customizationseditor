@@ -15,7 +15,7 @@
 
 </metal:block>
 
-<metal:block fill-slot="head_slot" tal:define="resourceDirectory nocall:context/++customizationpackage++plone-customizations">
+<metal:block fill-slot="head_slot" tal:define="resourceDirectory python:path('nocall:context/++customizationpackage++%s' % view.customizationsPackageName)">
 
 <!-- File manager -->
 <metal:block use-macro="resourceDirectory/@@plone.resourceeditor.filemanager/macros/resources" />
@@ -49,7 +49,7 @@
 </head>
 
 <body>
-<div metal:fill-slot="content" class="documentEditable" id="customizationsEditor" tal:define="resourceDirectory nocall:context/++customizationpackage++plone-customizations">
+<div metal:fill-slot="content" class="documentEditable" id="customizationsEditor" tal:define="resourceDirectory python:path('nocall:context/++customizationpackage++%s' % view.customizationsPackageName)">
 
     <div metal:use-macro="context/global_statusmessage/macros/portal_message">
       Portal status message
