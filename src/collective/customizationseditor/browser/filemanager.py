@@ -248,19 +248,18 @@ class FileManager(Base):
     def addNew(self, path, name):
         """Add a new empty file in the given directory
         """
-
         path = path.encode('utf-8')
         name = name.encode('utf-8')
 
         error = ''
         code = 0
 
-        parentPath = self.normalizePath(path)
-        newPath = "%s/%s" % (parentPath, name,)
+        # parentPath = self.normalizePath(path)
+        newPath = os.path.join(path, name)
 
         try:
-            parent = self.getObject(parentPath)
-        except KeyError:
+            os.stat(path)
+        except OSError:
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
@@ -271,16 +270,17 @@ class FileManager(Base):
                                   default=u"Invalid file name."),
                                   context=self.request)
                 code = 1
-            elif name in parent:
+            elif name in os.listdir(path):
                 error = translate(_(u'filemanager_error_file_exists',
                                   default=u"File already exists."),
                                   context=self.request)
                 code = 1
-            # else:
-            #     self.resourceDirectory.writeFile(newPath, '')
+            else:
+                opened_file = open(newPath, 'w')
+                opened_file.close()
 
         return {
-            "parent": self.normalizeReturnPath(parentPath),
+            "parent": self.normalizeReturnPath(path),
             "name": name,
             "error": error,
             "code": code,
