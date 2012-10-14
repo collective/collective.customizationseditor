@@ -137,21 +137,21 @@ class FileManager(Base):
         }
 
     def addFolder(self, path, name):
-        """Create a new directory on the server within the given path.
+        """Create a new directory in the filesystem within the given path.
         """
-
         path = path.encode('utf-8')
         name = name.encode('utf-8')
 
         code = 0
         error = ''
 
-        parentPath = self.normalizePath(path)
-        parent = None
+        absolutePath = self.getAbsolutePath(path)
+
+        newPath = os.path.join(absolutePath, name)
 
         try:
-            parent = self.getObject(parentPath)
-        except KeyError:
+            os.stat(absolutePath)
+        except OSError:
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
@@ -162,22 +162,31 @@ class FileManager(Base):
                                   default=u"Invalid folder name."),
                                   context=self.request)
                 code = 1
-            elif name in parent:
+            elif name in os.listdir(absolutePath):
                 error = translate(_(u'filemanager_error_folder_exists',
                                   default=u"Folder already exists."),
                                   context=self.request)
                 code = 1
-            # else:
-            #     try:
-            #         parent.makeDirectory(name)
-            #     except UnicodeDecodeError:
-            #         error = translate(_(u'filemanager_invalid_foldername',
-            #                       default=u"Invalid folder name."),
-            #                       context=self.request)
-            #         code = 1
+            else:
+                try:
+                    os.mkdir(newPath)
+                except OSError, e:
+                    if e.errno == 13:
+                        error = translate(_(u'filemanager_error_unauthorized',
+                                  default=(u"You are not allowed to create a "
+                                            "folder in \"%s\"." % path)),
+                                  context=self.request)
+                        code = 1
+
+                    else:
+                        error = translate(_(u'filemanager_error_unknown',
+                                  default=(u"Something bad happened: "
+                                            "\"%s\"." % e.strerror)),
+                                  context=self.request)
+                        code = 1
 
         return {
-            'parent': self.normalizeReturnPath(parentPath),
+            'parent': self.normalizeReturnPath(path),
             'name': name,
             'error': error,
             'code': code,
@@ -249,14 +258,16 @@ class FileManager(Base):
         path = path.encode('utf-8')
         name = name.encode('utf-8')
 
+        absolutePath = self.getAbsolutePath(path)
+
         error = ''
         code = 0
 
         # parentPath = self.normalizePath(path)
-        newPath = os.path.join(path, name)
+        newPath = os.path.join(absolutePath, name)
 
         try:
-            os.stat(path)
+            os.stat(absolutePath)
         except OSError:
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
@@ -268,7 +279,7 @@ class FileManager(Base):
                                   default=u"Invalid file name."),
                                   context=self.request)
                 code = 1
-            elif name in os.listdir(path):
+            elif name in os.listdir(absolutePath):
                 error = translate(_(u'filemanager_error_file_exists',
                                   default=u"File already exists."),
                                   context=self.request)
