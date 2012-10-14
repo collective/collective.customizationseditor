@@ -77,12 +77,8 @@ class FileManager(Base):
         returned.
         """
 
-        path = path.encode('utf-8')
-
-        path = self.normalizePath(path)
-        obj = self.getObject(path)
-
-        filename = obj.__name__
+        absolutePath = self.getAbsolutePath(path)
+        filename = self.getFilename(absolutePath)
         error = ''
         errorCode = 0
 
@@ -415,12 +411,10 @@ class FileManager(Base):
         """
 
         absolutePath = self.getAbsolutePath(path)
-        name = absolutePath.split('/')[-1]
+        name = self.getFilename(absolutePath)
 
-        self.request.response.setHeader('Content-Type',
-                                        'application/octet-stream')
-        self.request.response.setHeader('Content-Disposition',
-                                        'attachment; filename="%s"' % name)
+        self.request.response.setHeader('Content-Type', 'application/octet-stream')
+        self.request.response.setHeader('Content-Disposition', 'attachment; filename="%s"' % name)
 
         return open(absolutePath, 'rb')
 
@@ -441,12 +435,16 @@ class FileManager(Base):
             path = path.encode('utf-8')
         return path
 
+    def getFilename(self, path):
+        return path.split(os.path.sep)[-1]
+
     def getExtension(self, path):
         basename, ext = os.path.splitext(path)
         ext = ext[1:].lower()
         return ext
 
     # Methods that are their own views
+
     def getFile(self, path):
         self.setup()
 
