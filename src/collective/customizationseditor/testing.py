@@ -10,12 +10,7 @@ class CustomizationsEditor(PloneSandboxLayer):
     defaultBases = (PLONE_FIXTURE,)
 
     def setUpZope(self, app, configurationContext):
-        # load ZCML
-        import collective.customizationseditor.tests
-
-        # Run the startup hook
-        from collective.customizationseditor.plugins.hooks import onStartup
-        onStartup(None)
+        pass
 
     def setUpPloneSite(self, portal):
         # install into the Plone site

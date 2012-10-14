@@ -168,14 +168,14 @@ class FileManager(Base):
                                   default=u"Folder already exists."),
                                   context=self.request)
                 code = 1
-            else:
-                try:
-                    parent.makeDirectory(name)
-                except UnicodeDecodeError:
-                    error = translate(_(u'filemanager_invalid_foldername',
-                                  default=u"Invalid folder name."),
-                                  context=self.request)
-                    code = 1
+            # else:
+            #     try:
+            #         parent.makeDirectory(name)
+            #     except UnicodeDecodeError:
+            #         error = translate(_(u'filemanager_invalid_foldername',
+            #                       default=u"Invalid folder name."),
+            #                       context=self.request)
+            #         code = 1
 
         return {
             'parent': self.normalizeReturnPath(parentPath),

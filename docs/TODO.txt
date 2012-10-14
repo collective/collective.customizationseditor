@@ -11,6 +11,8 @@ To-do list
 [ ] Display warning and abort if no plone-customizations package exists
 [ ] Display warning and abort if package is not a develop egg
 
+[ ] Support for explicit plone.reload reloads
+
 [ ] Support for server restart
 [ ] Support for safe server restart:
     - Attempt to start Zope in a different process space
@@ -22,3 +24,5 @@ To-do list
     - Pick from a list of zip files to roll back
 [ ] Support for version control
     - Support basic git operations if git installed
+
+[ ] Support log viewing
