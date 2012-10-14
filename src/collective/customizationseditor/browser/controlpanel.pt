@@ -35,6 +35,16 @@
 
         $().ready(function() {
 
+            // Add support for more extensions
+            FileManager.extensionModes['py'] = 'ace/mode/python';
+            FileManager.extensionModes['cpy'] = 'ace/mode/python';
+
+            FileManager.extensionModes['pt'] = 'ace/mode/html';
+            FileManager.extensionModes['cpt'] = 'ace/mode/html';
+
+            FileManager.extensionModes['zcml'] = 'ace/mode/zcml';
+
+
             if($.browser.msie) {
                 $(".ie-warning").show();
             }
