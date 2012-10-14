@@ -438,18 +438,18 @@ class FileManager(Base):
         # except (KeyError, NotFound,):
         #     raise KeyError(path)
 
-    def getExtension(self, path, obj):
-        basename, ext = os.path.splitext(path)
-        ext = ext[1:].lower()
+    # def getExtension(self, path):
+    #     basename, ext = os.path.splitext(path)
+    #     ext = ext[1:].lower()
 
-        ct = obj.getContentType()
-        if ct:
-            # take content type of the file over extension if available
-            if '/' in ct:
-                _ext = ct.split('/')[1].lower()
-            if _ext in self.extensionsWithIcons:
-                return _ext
-        return ext
+    #     ct = obj.getContentType()
+    #     if ct:
+    #         # take content type of the file over extension if available
+    #         if '/' in ct:
+    #             _ext = ct.split('/')[1].lower()
+    #         if _ext in self.extensionsWithIcons:
+    #             return _ext
+    #     return ext
 
     # Methods that are their own views
     def getFile(self, path):
@@ -457,15 +457,24 @@ class FileManager(Base):
 
         path = path.encode('utf-8')
 
-        path = self.normalizePath(path)
-        # file = self.context.context.unrestrictedTraverse(path)
-        ext = self.getExtension(path, file)
+        # XXX: We'll need this later
+        # path = self.normalizePath(path)
+
+        basename, ext = os.path.splitext(path)
+        ext = ext[1:].lower()
+
         result = {'ext': ext}
+
+        # XXX: We need this ?
         # if ext in self.knownExtensions:
         #     result['contents'] = str(file.data)
         # else:
         #     info = self.getInfo(path)
         #     result['info'] = self.previewTemplate(info=info)
+
+        opened_file = open(path, 'r')
+        result['contents'] = str(opened_file.read())
+        opened_file.close()
 
         self.request.response.setHeader('Content-Type', 'application/json')
         return json.dumps(result)
@@ -473,9 +482,15 @@ class FileManager(Base):
     def saveFile(self, path, value):
         path = path.encode('utf-8')
 
-        processInputs(self.request)
+        # XXX: We need this ?
+        # processInputs(self.request)
+
         value = value.replace('\r\n', '\n')
-        # self.context.writeFile(path.lstrip('/'), value.encode('utf-8'))
+
+        opened_file = open(path, 'w')
+        opened_file.write(value.encode('utf-8'))
+        opened_file.close()
+
         return ' '  # Zope no likey empty responses
 
     def filetree(self):
