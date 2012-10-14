@@ -1,4 +1,5 @@
 import json
+import os
 import os.path
 
 from Products.Five.browser.decode import processInputs
@@ -481,26 +482,30 @@ class FileManager(Base):
 
         foldersOnly = bool(self.request.get('foldersOnly', False))
 
-        def getFolder(root, relpath=''):
+        def getFolder(root):
             result = []
-            # for name in root.listDirectory():
-            #     path = '%s/%s' % (relpath, name)
-            #     if IResourceDirectory.providedBy(root[name]):
-            #         item = {
-            #             'title': name,
-            #             'key': path,
-            #             'isFolder': True
-            #         }
-            #         item['children'] = getFolder(root[name], path)
-            #         result.append(item)
-            #     elif not foldersOnly:
-            #         item = {'title': name, 'key': path}
-            #         result.append(item)
+            for name in os.listdir(root):
+                path = os.path.join(root, name)
+                if os.path.isdir(path):
+                    item = {
+                        'title': name,
+                        'key': path,
+                        'isFolder': True
+                    }
+                    item['children'] = getFolder(path)
+                    result.append(item)
+                elif not foldersOnly:
+                    item = {
+                        'title': name,
+                        'key': path,
+                        'isFolder': False
+                    }
+                    result.append(item)
             return result
         return json.dumps([{
             'title': '/',
             'key': '/',
             'isFolder': True,
             "expand": True,
-            'children': getFolder(self.context)
+            'children': getFolder(self.context.path)
         }])
