@@ -1,8 +1,8 @@
 import json
 import os
 import os.path
+import time
 
-from Products.Five.browser.decode import processInputs
 from zope.i18nmessageid import MessageFactory
 from zope.cachedescriptors import property
 from zope.i18n import translate
@@ -23,6 +23,8 @@ class FileManager(Base):
     """A version of the @@plone.resourceeditor.filemanager API that works with
     filesystem files
     """
+
+    ignoredExtensions = ['pyc', 'pyo']
 
     @property.Lazy
     def resourceType(self):
@@ -52,21 +54,18 @@ class FileManager(Base):
         in a file system tree.
         """
 
-        path = path.encode('utf-8')
+        absolutePath = self.getAbsolutePath(path)
 
         folders = []
         files = []
 
-        path = self.normalizePath(path)
-        # folder = self.getObject(path)
-
-        # for name in folder.listDirectory():
-        #     if IResourceDirectory.providedBy(folder[name]):
-        #         folders.append(self.getInfo(
-        #             path="%s/%s/" % (path, name), getSize=getSizes))
-        #     else:
-        #         files.append(self.getInfo(
-        #             path="%s/%s" % (path, name), getSize=getSizes))
+        for name in os.listdir(absolutePath):
+            if self.getExtension(name) not in self.ignoredExtensions:
+                itemPath = os.path.join(absolutePath, name)
+                if os.path.isdir(itemPath):
+                    folders.append(self.getInfo(path=os.path.join(path, name), getSize=getSizes))
+                else:
+                    files.append(self.getInfo(path=os.path.join(path, name), getSize=getSizes))
         return folders + files
 
     def getInfo(self, path, getSize=False):
@@ -87,45 +86,34 @@ class FileManager(Base):
             'dateModified': None,
         }
 
-        # if isinstance(obj, File):
-        #     properties['dateCreated'] = obj.created().strftime('%c')
-        #     properties['dateModified'] = obj.modified().strftime('%c')
-        #     size = obj.get_size() / 1024
-        #     if size < 1024:
-        #         size_specifier = u'kb'
-        #     else:
-        #         size_specifier = u'mb'
-        #         size = size / 1024
-        #     properties['size'] = '%i%s' % (size,
-        #         translate(_(u'filemanager_%s' % size_specifier, default=size_specifier), context=self.request)
-        #         )
+        if os.path.isfile(absolutePath):
+            properties['dateCreated'] = time.ctime(os.path.getctime(absolutePath))
+            properties['dateModified'] = time.ctime(os.path.getmtime(absolutePath))
+            size = os.path.getsize(absolutePath) / 1024
+            if size < 1024:
+                size_specifier = u'kb'
+            else:
+                size_specifier = u'mb'
+                size = size / 1024
+            properties['size'] = '%i%s' % (size,
+                translate(_(u'filemanager_%s' % size_specifier, default=size_specifier), context=self.request)
+                )
 
         fileType = 'txt'
 
         siteUrl = self.portalUrl
-        # resourceName = self.resourceDirectory.__name__
-
         preview = "%s/%s/images/fileicons/default.png" % (siteUrl, self.staticFiles)
 
-        # if IResourceDirectory.providedBy(obj):
-        #     preview = "%s/%s/images/fileicons/_Open.png" % (siteUrl,
-        #                                                     self.staticFiles)
-        #     fileType = 'dir'
-        #     path = path + '/'
-        # else:
-        #     fileType = self.getExtension(path, obj)
-        #     if fileType in self.imageExtensions:
-        #         preview = '%s/++%s++%s/%s' % (siteUrl, self.resourceType,
-        #                                       resourceName, path)
-        #     elif fileType in self.extensionsWithIcons:
-        #         preview = "%s/%s/images/fileicons/%s.png" % (siteUrl,
-        #                                                      self.staticFiles,
-        #                                                      fileType)
-
-        # if getSize and isinstance(obj, Image):
-        #     properties['height'] = obj.height
-        #     properties['width'] = obj.width
-
+        if os.path.isdir(absolutePath):
+            preview = "%s/%s/images/fileicons/_Open.png" % (siteUrl, self.staticFiles)
+            fileType = 'dir'
+            path = path + '/'
+        else:
+            fileType = self.getExtension(absolutePath)
+            if fileType in self.extensionsWithIcons:
+                preview = "%s/%s/images/fileicons/%s.png" % (siteUrl,
+                                                             self.staticFiles,
+                                                             fileType)
         return {
             'path': self.normalizeReturnPath(path),
             'filename': filename,
@@ -149,9 +137,7 @@ class FileManager(Base):
 
         newPath = os.path.join(absolutePath, name)
 
-        try:
-            os.stat(absolutePath)
-        except OSError:
+        if not os.path.isdir(absolutePath):
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
@@ -162,7 +148,7 @@ class FileManager(Base):
                                   default=u"Invalid folder name."),
                                   context=self.request)
                 code = 1
-            elif name in os.listdir(absolutePath):
+            elif os.path.exists(newPath):
                 error = translate(_(u'filemanager_error_folder_exists',
                                   default=u"Folder already exists."),
                                   context=self.request)
@@ -263,12 +249,9 @@ class FileManager(Base):
         error = ''
         code = 0
 
-        # parentPath = self.normalizePath(path)
         newPath = os.path.join(absolutePath, name)
 
-        try:
-            os.stat(absolutePath)
-        except OSError:
+        if not os.path.isdir(absolutePath):
             error = translate(_(u'filemanager_invalid_parent',
                               default=u"Parent folder not found."),
                               context=self.request)
@@ -279,7 +262,7 @@ class FileManager(Base):
                                   default=u"Invalid file name."),
                                   context=self.request)
                 code = 1
-            elif name in os.listdir(absolutePath):
+            elif os.path.exists(newPath):
                 error = translate(_(u'filemanager_error_file_exists',
                                   default=u"File already exists."),
                                   context=self.request)
@@ -467,7 +450,7 @@ class FileManager(Base):
 
         result = {'ext': ext}
 
-        if ext in self.knownExtensions:
+        if ext not in self.imageExtensions:
             openedFile = open(absolutePath, 'rb')
             result['contents'] = str(openedFile.read())
             openedFile.close()
@@ -509,7 +492,7 @@ class FileManager(Base):
                     }
                     item['children'] = getFolder(rootPath, key)
                     result.append(item)
-                elif not foldersOnly:
+                elif not foldersOnly and not self.getExtension(path) in self.ignoredExtensions:
                     item = {
                         'title': name,
                         'key': key,
